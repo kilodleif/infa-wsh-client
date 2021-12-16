@@ -11,10 +11,11 @@ import com.informatica.wsh.port.MetadataService;
 import com.informatica.wsh.type.*;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import java.util.stream.Collectors;
 
 /**
@@ -25,58 +26,63 @@ import java.util.stream.Collectors;
  */
 public class WshHelper implements WshConstants {
 
+    private static WshHelper wshHelper = null;
+
     private final MetadataInterface metadataInterface;
     private final DataIntegrationInterface dataIntegrationInterface;
 
-    private static boolean isInitiated = false;
-    private static Exception initException;
+    private static String cachedHostname = "";
+    private static int cachedPort = 0;
 
-    private String repoName;
-    private String userName;
-    private String password;
-
-    private int maxRetryCount;
-
+    private InfaAuthInfo authInfo;
     private SessionHeader sessionHeader;
-    private DIServiceInfo serviceInfo;
+    private final DIServiceInfo serviceInfo;
 
-    private WshHelper() {
-        metadataInterface = new MetadataService().getMetadata();
-        dataIntegrationInterface = new DataIntegrationService().getDataIntegration();
-        init();
+    private WshHelper(String hostname, int port, InfaAuthInfo authInfo) throws MalformedURLException {
+        String metadataUrlStr = String.format(METADATA_WSDL_LOCATION_FMT, hostname, port);
+        String dataIntUrlStr = String.format(DATAINT_WSDL_LOCATION_FMT, hostname, port);
+        metadataInterface = new MetadataService(new URL(metadataUrlStr)).getMetadata();
+        dataIntegrationInterface = new DataIntegrationService(new URL(dataIntUrlStr)).getDataIntegration();
+        // 初始化鉴权信息
+        initAuthInfo(authInfo);
+        // 获取session头
+        sessionHeader = getSessionHeader();
+        // 构造service info
+        serviceInfo = new DIServiceInfo(authInfo.getServiceName());
     }
 
-    private void init() {
-        try {
-            Properties properties = new Properties();
-            properties.load(WshHelper.class.getResourceAsStream(PROPERTIES_FILE_PATH));
-            repoName = properties.getProperty(PROP_INFA_REPO_NAME);
-            userName = properties.getProperty(PROP_INFA_USERNAME);
-            password = properties.getProperty(PROP_INFA_PASSWORD);
+    private void initAuthInfo(InfaAuthInfo authInfo) {
+        this.authInfo = authInfo;
+    }
 
-            maxRetryCount = Integer.parseInt(properties.getProperty(PROP_INFA_RETRY_MAX_COUNT, "3"));
-
-            serviceInfo = new DIServiceInfo(properties.getProperty(PROP_INFA_SERVICE_NAME));
-            sessionHeader = getSessionHeader();
-
-            isInitiated = true;
-        } catch (IOException e) {
-            isInitiated = false;
-            initException = e;
+    /**
+     * 当hostname和port发生变化时重新创建新实例，否则返回旧实例
+     *
+     * @param hostname 主机名
+     * @param port 端口号
+     * @param authInfo 鉴权信息
+     * @return WshHelper实例
+     */
+    public static WshHelper createIfLocationChanged(String hostname, int port, InfaAuthInfo authInfo) {
+        if (!cachedHostname.equals(hostname) || cachedPort != port) {
+            try {
+                wshHelper = new WshHelper(hostname, port, authInfo);
+                cachedHostname = hostname;
+                cachedPort = port;
+            } catch (IOException e) {
+                throw new WshInitException("creating WshHelper instance failed.", e);
+            }
         }
-    }
-
-    private static class SingletonHolder {
-        private static final WshHelper INSTANCE = new WshHelper();
+        return wshHelper;
     }
 
     private SessionHeader getSessionHeader() {
         SessionHeader sessionHeader;
         try {
             LoginRequest request = new LoginRequest();
-            request.setRepositoryName(repoName);
-            request.setUserName(userName);
-            request.setPassword(password);
+            request.setRepositoryName(authInfo.getRepoName());
+            request.setUserName(authInfo.getUsername());
+            request.setPassword(authInfo.getPassword());
             String sessionId = metadataInterface.login(request, null);
             sessionHeader = new SessionHeader();
             sessionHeader.setSessionId(sessionId);
@@ -84,20 +90,6 @@ public class WshHelper implements WshConstants {
             sessionHeader = null;
         }
         return sessionHeader;
-    }
-
-    /**
-     * 获取工具类实例
-     *
-     * @return INSTANCE
-     */
-    public static WshHelper getInstance() {
-        WshHelper instance = SingletonHolder.INSTANCE;
-        // 必须在判断初始化状态之前获取实例
-        if (!isInitiated) {
-            throw new WshInitException("WshHelper Initialization failed.", initException);
-        }
-        return instance;
     }
 
     /**
@@ -128,7 +120,7 @@ public class WshHelper implements WshConstants {
     }
 
     private Map<String, List<String>> getAllWorkflowsByFoldersWithRetry(int retryCount) throws Fault {
-        if (retryCount > maxRetryCount) {
+        if (retryCount > RETRY_MAX_COUNT) {
             throw new Fault("Retry times reached max!", new FaultDetails());
         }
         try {
@@ -168,7 +160,7 @@ public class WshHelper implements WshConstants {
 
     private WorkflowAndSessionStatus startWorkflowWithRetry(String folderName, String workflowName, int retryCount)
             throws Fault {
-        if (retryCount > maxRetryCount) {
+        if (retryCount > RETRY_MAX_COUNT) {
             throw new Fault("Retry times reached max!", new FaultDetails());
         }
         try {

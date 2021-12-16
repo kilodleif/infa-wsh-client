@@ -8,10 +8,7 @@ import javax.xml.namespace.QName;
 import javax.xml.ws.Service;
 import javax.xml.ws.WebEndpoint;
 import javax.xml.ws.WebServiceClient;
-import javax.xml.ws.WebServiceException;
-import java.io.IOException;
 import java.net.URL;
-import java.util.Properties;
 
 
 /**
@@ -23,26 +20,10 @@ import java.util.Properties;
 @WebServiceClient(name = "MetadataService", targetNamespace = "http://www.informatica.com/wsh", wsdlLocation = "http://congos:7333/wsh/services/BatchServices/Metadata?WSDL")
 public class MetadataService extends Service implements WshConstants {
 
-    private final static URL METADATASERVICE_WSDL_LOCATION;
-    private final static WebServiceException METADATASERVICE_EXCEPTION;
     private final static QName METADATASERVICE_QNAME = new QName("http://www.informatica.com/wsh", "MetadataService");
 
-    static  {
-        URL url = null;
-        WebServiceException e = null;
-        try {
-            Properties properties = new Properties();
-            properties.load(DataIntegrationService.class.getResourceAsStream(PROPERTIES_FILE_PATH));
-            url = new URL(properties.getProperty(PROP_INFA_WSDL_METADATA));
-        } catch (IOException ex) {
-            e = new WebServiceException(ex);
-        }
-        METADATASERVICE_WSDL_LOCATION = url;
-        METADATASERVICE_EXCEPTION = e;
-    }
-
-    public MetadataService() {
-        super(__getWsdlLocation(), METADATASERVICE_QNAME);
+    public MetadataService(URL wsdlDocLocation) {
+        super(wsdlDocLocation, METADATASERVICE_QNAME);
     }
 
     /**
@@ -53,13 +34,6 @@ public class MetadataService extends Service implements WshConstants {
     @WebEndpoint(name = "Metadata")
     public MetadataInterface getMetadata() {
         return super.getPort(new QName("http://www.informatica.com/wsh", "Metadata"), MetadataInterface.class);
-    }
-
-    private static URL __getWsdlLocation() {
-        if (METADATASERVICE_EXCEPTION!= null) {
-            throw METADATASERVICE_EXCEPTION;
-        }
-        return METADATASERVICE_WSDL_LOCATION;
     }
 
 }
