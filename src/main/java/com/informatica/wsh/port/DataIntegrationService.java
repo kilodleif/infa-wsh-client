@@ -1,13 +1,10 @@
 
 package com.informatica.wsh.port;
 
-import com.informatica.wsh.WshConstants;
 import com.informatica.wsh.intf.DataIntegrationInterface;
 
 import javax.xml.namespace.QName;
 import javax.xml.ws.Service;
-import javax.xml.ws.WebEndpoint;
-import javax.xml.ws.WebServiceClient;
 import java.net.URL;
 
 
@@ -17,13 +14,13 @@ import java.net.URL;
  * Generated source version: 2.2
  * 
  */
-@WebServiceClient(name = "DataIntegrationService", targetNamespace = "http://www.informatica.com/wsh", wsdlLocation = "http://congos:7333/wsh/services/BatchServices/DataIntegration?WSDL")
-public class DataIntegrationService extends Service implements WshConstants {
+public class DataIntegrationService {
 
-    private final static QName DATAINTEGRATIONSERVICE_QNAME = new QName("http://www.informatica.com/wsh", "DataIntegrationService");
+    private final Service dataIntegrationService;
+    private static final QName DATAINTEGRATIONSERVICE_QNAME = new QName("http://www.informatica.com/wsh", "DataIntegrationService");
 
     public DataIntegrationService(URL wsdlDocLocation) {
-        super(wsdlDocLocation, DATAINTEGRATIONSERVICE_QNAME);
+        dataIntegrationService = Service.create(wsdlDocLocation, DATAINTEGRATIONSERVICE_QNAME);
     }
 
     /**
@@ -31,9 +28,8 @@ public class DataIntegrationService extends Service implements WshConstants {
      * @return
      *     returns DataIntegrationInterface
      */
-    @WebEndpoint(name = "DataIntegration")
     public DataIntegrationInterface getDataIntegration() {
-        return super.getPort(new QName("http://www.informatica.com/wsh", "DataIntegration"), DataIntegrationInterface.class);
+        return dataIntegrationService.getPort(new QName("http://www.informatica.com/wsh", "DataIntegration"), DataIntegrationInterface.class);
     }
 
 }

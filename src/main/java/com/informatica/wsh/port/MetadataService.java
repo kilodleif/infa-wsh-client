@@ -1,13 +1,10 @@
 
 package com.informatica.wsh.port;
 
-import com.informatica.wsh.WshConstants;
 import com.informatica.wsh.intf.MetadataInterface;
 
 import javax.xml.namespace.QName;
 import javax.xml.ws.Service;
-import javax.xml.ws.WebEndpoint;
-import javax.xml.ws.WebServiceClient;
 import java.net.URL;
 
 
@@ -17,13 +14,13 @@ import java.net.URL;
  * Generated source version: 2.2
  * 
  */
-@WebServiceClient(name = "MetadataService", targetNamespace = "http://www.informatica.com/wsh", wsdlLocation = "http://congos:7333/wsh/services/BatchServices/Metadata?WSDL")
-public class MetadataService extends Service implements WshConstants {
+public class MetadataService {
 
-    private final static QName METADATASERVICE_QNAME = new QName("http://www.informatica.com/wsh", "MetadataService");
+    private final Service metadataService;
+    private static final QName METADATASERVICE_QNAME = new QName("http://www.informatica.com/wsh", "MetadataService");
 
     public MetadataService(URL wsdlDocLocation) {
-        super(wsdlDocLocation, METADATASERVICE_QNAME);
+        metadataService = Service.create(wsdlDocLocation, METADATASERVICE_QNAME);
     }
 
     /**
@@ -31,9 +28,8 @@ public class MetadataService extends Service implements WshConstants {
      * @return
      *     returns MetadataInterface
      */
-    @WebEndpoint(name = "Metadata")
     public MetadataInterface getMetadata() {
-        return super.getPort(new QName("http://www.informatica.com/wsh", "Metadata"), MetadataInterface.class);
+        return metadataService.getPort(new QName("http://www.informatica.com/wsh", "Metadata"), MetadataInterface.class);
     }
 
 }
