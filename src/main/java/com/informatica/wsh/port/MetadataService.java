@@ -14,13 +14,12 @@ import java.net.URL;
  * Generated source version: 2.2
  * 
  */
-public class MetadataService {
+public class MetadataService extends Service {
 
-    private final Service metadataService;
     private static final QName METADATASERVICE_QNAME = new QName("http://www.informatica.com/wsh", "MetadataService");
 
     public MetadataService(URL wsdlDocLocation) {
-        metadataService = Service.create(wsdlDocLocation, METADATASERVICE_QNAME);
+        super(wsdlDocLocation, METADATASERVICE_QNAME);
     }
 
     /**
@@ -29,7 +28,7 @@ public class MetadataService {
      *     returns MetadataInterface
      */
     public MetadataInterface getMetadata() {
-        return metadataService.getPort(new QName("http://www.informatica.com/wsh", "Metadata"), MetadataInterface.class);
+        return super.getPort(new QName("http://www.informatica.com/wsh", "Metadata"), MetadataInterface.class);
     }
 
 }

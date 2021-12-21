@@ -14,13 +14,12 @@ import java.net.URL;
  * Generated source version: 2.2
  * 
  */
-public class DataIntegrationService {
+public class DataIntegrationService extends Service {
 
-    private final Service dataIntegrationService;
     private static final QName DATAINTEGRATIONSERVICE_QNAME = new QName("http://www.informatica.com/wsh", "DataIntegrationService");
 
     public DataIntegrationService(URL wsdlDocLocation) {
-        dataIntegrationService = Service.create(wsdlDocLocation, DATAINTEGRATIONSERVICE_QNAME);
+        super(wsdlDocLocation, DATAINTEGRATIONSERVICE_QNAME);
     }
 
     /**
@@ -29,7 +28,7 @@ public class DataIntegrationService {
      *     returns DataIntegrationInterface
      */
     public DataIntegrationInterface getDataIntegration() {
-        return dataIntegrationService.getPort(new QName("http://www.informatica.com/wsh", "DataIntegration"), DataIntegrationInterface.class);
+        return super.getPort(new QName("http://www.informatica.com/wsh", "DataIntegration"), DataIntegrationInterface.class);
     }
 
 }
